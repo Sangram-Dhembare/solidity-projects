@@ -18,6 +18,7 @@ Last updated: 21 October 2026
 - Added `foundry.toml`, Makefile, deployment script, local broadcast address
   reader, GitHub Actions CI, MIT license, and honest project documentation.
 - Added ignores for Foundry build output and local secret/keystore files.
+- Implementation commit: `501cb59 Set up Foundry voting project and tests`.
 
 ## Verified locally
 
