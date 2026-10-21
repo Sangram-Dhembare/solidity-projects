@@ -1,30 +1,151 @@
 # Solidity Voting Examples
 
-A small Solidity project for learning how smart contracts can store data and restrict who can change it. It includes a basic voting contract and a poll manager.
+[![Solidity CI](https://github.com/Sangram-Dhembare/solidity-projects/actions/workflows/ci.yml/badge.svg)](https://github.com/Sangram-Dhembare/solidity-projects/actions/workflows/ci.yml)
 
-## What it does
+Educational Solidity contracts for fixed-candidate voting and permissionless
+poll creation, tested with Foundry. `ElectionAnchor` records a supplied SHA-256
+election-configuration digest; it does not run an election or verify the
+configuration itself.
 
-- `SimpleVoting` creates a fixed list of candidates when deployed and lets each address vote once.
-- `PollManager` lets poll creators create polls, open and close voting, and track votes for each poll.
-- Both contracts store vote totals on-chain, emit events for votes, and reject invalid candidate numbers and repeat votes.
+## Contracts
 
-These are practice examples, not secure or private voting systems. Votes and wallet addresses are public on-chain, and using another wallet address allows another vote.
+| Contract | Purpose | Key functions |
+| --- | --- | --- |
+| `SimpleVoting` | One fixed candidate list; one vote per address | `vote`, `candidateCount`, `candidates`, `hasVoted` |
+| `PollManager` | Create polls, allow the creator to open/close voting, one vote per address per poll | `createPoll`, `openVoting`, `closeVoting`, `vote`, `getPoll`, `getCandidate` |
+| `ElectionAnchor` | Record the first claim for a configuration digest | `anchor`, `verify`, `organizerOf`, `anchoredAt` |
 
-## Try it in Remix
+Candidate lists have 2–100 entries and names are limited to 100 bytes.
+Candidate indexes start at zero. `PollManager` polls start closed; creators
+may reopen them, but an address can still vote only once per poll.
 
-1. Open [Remix](https://remix.ethereum.org/) and create a Solidity file for either contract.
-2. Copy the code from [`contracts/SimpleVoting.sol`](contracts/SimpleVoting.sol) or [`contracts/PollManager.sol`](contracts/PollManager.sol) into the file.
-3. In the Solidity Compiler tab, select compiler version `0.8.24` or a compatible `0.8.x` version and compile.
-4. In Deploy & Run Transactions, choose `Remix VM` as the environment and select the contract you want to try.
-5. For `SimpleVoting`, enter candidate names as a string array, for example `["Alice", "Bob"]`, then deploy. For `PollManager`, deploy with no arguments and call `createPoll` with the same kind of array.
-6. With `SimpleVoting`, call `candidateCount` and `candidates` to inspect candidates. For `PollManager`, call `openVoting` with poll ID `0`, then use `candidateCount` and `getCandidate` to inspect its candidates.
-7. Call `vote` with a candidate number starting at `0` (`pollId` first for `PollManager`). Try voting again from the same account to see the contract reject it. Switch accounts in Remix to cast another vote.
-8. For `PollManager`, call `closeVoting` with the poll ID to stop voting. Check candidate totals again with `getCandidate`.
+## Voting flow
 
-## Contract details
+```mermaid
+flowchart TD
+  Create["Create fixed candidate list"] --> Open["Creator opens poll"]
+  Open --> Vote["Address votes once"]
+  Vote --> Tally["Public on-chain tally and VoteCast event"]
+  Tally --> Close["Creator closes poll"]
+  Config["DEVO canonical config JSON"] --> Hash["SHA-256 of compact UTF-8 JSON"]
+  Hash --> Digest["bytes32 digest"]
+  Digest --> Anchor["Organizer anchors digest"]
+```
 
-In both contracts, the candidate list is fixed when the contract is deployed or the poll is created, and candidate numbers start at zero. Each contract records whether an address has voted, and its `VoteCast` event records the voter's address and chosen candidate number.
+`ElectionAnchor` accepts the 32-byte SHA-256 digest produced by DEVO's
+`ElectionConfig.configHash`. The caller supplies the digest; the contract does
+not parse or hash configuration JSON, validate organizer identity, or prove
+that a configuration is truthful. Anyone can make the first claim for a
+digest.
 
-For `SimpleVoting`, there is no owner or administrator. Anyone can deploy a new poll, and anyone with an eligible address can vote.
+## Install, build, and test
 
-For `PollManager`, anyone can create a poll, which starts with voting closed. Only its creator can open or close voting. Polls can be reopened, but an address can still vote only once per poll.
+Install Foundry using the [official instructions](https://getfoundry.sh/introduction/installation/),
+then from this repository:
+
+```sh
+forge install
+forge build
+forge test
+```
+
+This repository pins `solc` 0.8.24 and `forge-std` in `foundry.toml` and
+`.gitmodules`. The latest local verification completed with **34 tests passing**
+(including fuzz and invariant tests), **100% line and branch coverage for the
+three contracts under `src/`**, and 128,000 invariant handler calls. The
+deployment script is not included in the contract coverage figure.
+
+Useful targets:
+
+```sh
+make build
+make test
+make coverage
+make fmt
+make addresses CHAIN_ID=31337
+```
+
+## Local deployment
+
+In one terminal start the local-only Anvil node:
+
+```sh
+make anvil
+```
+
+In another terminal deploy all three contracts using Anvil's public, local-only
+unlocked account, then print their addresses:
+
+```sh
+make deploy-local
+make addresses CHAIN_ID=31337
+```
+
+The default Anvil sender in the Makefile is a publicly documented development
+address and must never be funded or reused on a public network.
+
+## Testnet deployment
+
+Testnet deployment defaults to Sepolia. Add your RPC provider URL and Etherscan
+API key to an ignored local `.env` file; do not commit it. Etherscan API v2
+requires an API key for verification. Foundry's `--verify` option submits source
+verification after broadcasting.
+
+Import the deployer's key into the encrypted Foundry keystore using the
+interactive prompt; never put a private key in chat or a project file:
+
+```sh
+cast wallet import devo-sepolia --interactive
+```
+
+Set `SEPOLIA_RPC_URL` and `ETHERSCAN_API_KEY` in `.env`, fund the keystore
+address with Sepolia faucet ETH, then deploy and print the resulting records:
+
+```sh
+make deploy-sepolia ACCOUNT=devo-sepolia
+make addresses CHAIN_ID=11155111
+```
+
+For Base Sepolia, set `BASE_SEPOLIA_RPC_URL` in `.env` and run:
+
+```sh
+forge script script/Deploy.s.sol --rpc-url base_sepolia --chain 84532 --broadcast --account devo-sepolia --verify
+make addresses CHAIN_ID=84532
+```
+
+If automatic verification needs to be retried, use the address and constructor
+arguments from the broadcast record:
+
+```sh
+forge verify-contract --chain sepolia <SIMPLE_VOTING_ADDRESS> src/SimpleVoting.sol:SimpleVoting --constructor-args "$(cast abi-encode 'constructor(string[])' '["Alice","Bob"]')" --watch
+forge verify-contract --chain sepolia <POLL_MANAGER_ADDRESS> src/PollManager.sol:PollManager --watch
+forge verify-contract --chain sepolia <ELECTION_ANCHOR_ADDRESS> src/ElectionAnchor.sol:ElectionAnchor --watch
+```
+
+For Base Sepolia, replace `--chain sepolia` with `--chain 84532`. Verification
+uses `ETHERSCAN_API_KEY` from `.env` and the chain's entry in `foundry.toml`.
+
+## Deployments
+
+**Not yet deployed.** No testnet or production addresses are published here.
+Only add addresses after a real deployment and independent explorer check.
+
+## Security notes
+
+- Educational examples only; unaudited and not suitable for real elections.
+- Vote choices, wallet addresses, events, and tallies are public on-chain.
+- One vote per address is not voter eligibility: users can create additional
+  addresses. There is no privacy, anonymity, coercion resistance, or Sybil
+  resistance.
+- Poll creators control opening and closing and may reopen a poll. There are no
+  voting time windows, snapshots, or independent governance controls.
+- `ElectionAnchor` records a digest claim, not the config, its provenance, or
+  the caller's organizer status.
+- Candidate and name limits bound each creation loop; they do not make the
+  contracts audited or safe for high-value use.
+
+## Roadmap
+
+- Review these contracts and document their assumptions before any real use.
+- Add voter eligibility and privacy only after a concrete threat model exists.
+- Keep deployments limited to testnets until independently reviewed.

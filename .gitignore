@@ -3,3 +3,9 @@ out/
 cache/
 broadcast/
 node_modules/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.keystore
