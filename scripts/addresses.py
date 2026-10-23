@@ -9,6 +9,7 @@ EXPLORERS = {
     "11155111": "https://sepolia.etherscan.io/address/",
     "84532": "https://sepolia.basescan.org/address/",
 }
+CONTRACT_NAMES = ("SimpleVoting", "PollManager", "ElectionAnchor", "ContactBook")
 
 
 def main() -> int:
@@ -31,13 +32,13 @@ def main() -> int:
             continue
         name = transaction.get("contractName")
         address = transaction.get("contractAddress")
-        if name in {"SimpleVoting", "PollManager", "ElectionAnchor"} and address:
+        if name in CONTRACT_NAMES and address:
             contracts[name] = address
 
     explorer = EXPLORERS.get(chain_id)
     print("| Contract | Address |")
     print("| --- | --- |")
-    for name in ("SimpleVoting", "PollManager", "ElectionAnchor"):
+    for name in CONTRACT_NAMES:
         address = contracts.get(name)
         if address is None:
             print(f"| {name} | Not found in latest deployment |")
@@ -46,7 +47,7 @@ def main() -> int:
         else:
             print(f"| {name} | `{address}` (chain {chain_id}) |")
 
-    return 0 if len(contracts) == 3 else 1
+    return 0 if len(contracts) == len(CONTRACT_NAMES) else 1
 
 
 if __name__ == "__main__":

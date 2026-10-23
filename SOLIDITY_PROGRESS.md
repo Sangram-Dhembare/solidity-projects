@@ -1,6 +1,6 @@
 # Solidity project progress
 
-Last updated: 21 October 2026
+Last updated: 23 October 2026
 
 ## Completed
 
@@ -15,6 +15,10 @@ Last updated: 21 October 2026
   organizer.
 - Added unit tests for public functions and revert paths, event assertions,
   fuzz tests, and a vote-tally invariant.
+- Added `ContactBook`, a per-wallet public address list with add, remove, and
+  lookup operations.
+- Added contact-book tests and included the contract in local/testnet deployment
+  output.
 - Added `foundry.toml`, Makefile, deployment script, local broadcast address
   reader, GitHub Actions CI, MIT license, and honest project documentation.
 - Added ignores for Foundry build output and local secret/keystore files.
@@ -25,15 +29,17 @@ Last updated: 21 October 2026
 - `forge fmt --check` — passed.
 - `forge build --sizes` — passed.
 - `forge lint src test script --report-unused-suppressions` — no findings.
-- `forge test` — 34 passed, including 512 fuzz runs and a 128,000-call
+- `forge test` — 41 passed, including 512 fuzz runs and a 128,000-call
   invariant run.
-- `forge coverage` — all three contracts in `src/` have 100% line and branch
+- `forge coverage` — all four contracts in `src/` have 100% line and branch
   coverage. The deployment script is not included in that contract metric.
 - `forge snapshot` and `forge snapshot --check` — passed.
-- Slither 0.11.4 — analyzed three contracts with 100 detectors; no results.
+- Slither 0.11.4 baseline — analyzed the three original contracts with 100
+  detectors and reported no results. `ContactBook` has not had a Slither run.
 - `actionlint` 1.7.12 — workflow validation passed.
-- Local Anvil deployment on chain ID 31337 succeeded for all three contracts;
-  `make addresses CHAIN_ID=31337` printed all three addresses.
+- Local Anvil deployment simulation on chain ID 31337 succeeded for all four
+  contracts. The address reader was smoke-tested against a four-contract
+  deployment record.
 - Foundry RPC/API-key config, deploy/account flags, constructor ABI encoding,
   and verification flags were checked locally.
 

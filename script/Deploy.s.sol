@@ -2,16 +2,22 @@
 pragma solidity ^0.8.24;
 
 import { Script, console2 } from "forge-std/Script.sol";
+import { ContactBook } from "../src/ContactBook.sol";
 import { ElectionAnchor } from "../src/ElectionAnchor.sol";
 import { PollManager } from "../src/PollManager.sol";
 import { SimpleVoting } from "../src/SimpleVoting.sol";
 
 contract DeployScript is Script {
-    /// @notice Deploys the example fixed-candidate vote and poll manager.
+    /// @notice Deploys the example voting, anchoring, and contact contracts.
     /// @dev Signing is provided by Foundry CLI options; this script reads no secrets.
     function run()
         external
-        returns (SimpleVoting voting, PollManager manager, ElectionAnchor anchor)
+        returns (
+            SimpleVoting voting,
+            PollManager manager,
+            ElectionAnchor anchor,
+            ContactBook contactBook
+        )
     {
         string[] memory candidateNames = new string[](2);
         candidateNames[0] = "Alice";
@@ -21,10 +27,12 @@ contract DeployScript is Script {
         voting = new SimpleVoting(candidateNames);
         manager = new PollManager();
         anchor = new ElectionAnchor();
+        contactBook = new ContactBook();
         vm.stopBroadcast();
 
         console2.log("SimpleVoting", address(voting));
         console2.log("PollManager", address(manager));
         console2.log("ElectionAnchor", address(anchor));
+        console2.log("ContactBook", address(contactBook));
     }
 }

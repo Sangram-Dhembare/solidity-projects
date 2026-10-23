@@ -14,6 +14,7 @@ configuration itself.
 | `SimpleVoting` | One fixed candidate list; one vote per address | `vote`, `candidateCount`, `candidates`, `hasVoted` |
 | `PollManager` | Create polls, allow the creator to open/close voting, one vote per address per poll | `createPoll`, `openVoting`, `closeVoting`, `vote`, `getPoll`, `getCandidate` |
 | `ElectionAnchor` | Record the first claim for a configuration digest | `anchor`, `verify`, `organizerOf`, `anchoredAt` |
+| `ContactBook` | Maintain a caller-specific list of wallet addresses | `addContact`, `removeContact`, `isContact`, `contactCount`, `contactAt` |
 
 Candidate lists have 2–100 entries and names are limited to 100 bytes.
 Candidate indexes start at zero. `PollManager` polls start closed; creators
@@ -50,10 +51,10 @@ forge test
 ```
 
 This repository pins `solc` 0.8.24 and `forge-std` in `foundry.toml` and
-`.gitmodules`. The latest local verification completed with **34 tests passing**
-(including fuzz and invariant tests), **100% line and branch coverage for the
-three contracts under `src/`**, and 128,000 invariant handler calls. The
-deployment script is not included in the contract coverage figure.
+`.gitmodules`. The current suite has **41 passing tests** (including fuzz and
+invariant tests), **100% line and branch coverage for all four contracts under
+`src/`**, and 128,000 invariant handler calls. The deployment script is not
+included in the contract coverage figure.
 
 Useful targets:
 
@@ -73,7 +74,7 @@ In one terminal start the local-only Anvil node:
 make anvil
 ```
 
-In another terminal deploy all three contracts using Anvil's public, local-only
+In another terminal deploy all four contracts using Anvil's public, local-only
 unlocked account, then print their addresses:
 
 ```sh
@@ -141,6 +142,8 @@ Only add addresses after a real deployment and independent explorer check.
   voting time windows, snapshots, or independent governance controls.
 - `ElectionAnchor` records a digest claim, not the config, its provenance, or
   the caller's organizer status.
+- `ContactBook` records public wallet-address associations. Do not treat its
+  lists or events as private contact data.
 - Candidate and name limits bound each creation loop; they do not make the
   contracts audited or safe for high-value use.
 
