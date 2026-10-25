@@ -12,13 +12,16 @@ configuration itself.
 | Contract | Purpose | Key functions |
 | --- | --- | --- |
 | `SimpleVoting` | One fixed candidate list; one vote per address | `vote`, `candidateCount`, `candidates`, `hasVoted` |
-| `PollManager` | Create polls, allow the creator to open/close voting, one vote per address per poll | `createPoll`, `openVoting`, `closeVoting`, `vote`, `getPoll`, `getCandidate` |
+| `PollManager` | Create polls, allow the creator to open/close voting, one vote per address per poll | `createPoll`, `openVoting`, `closeVoting`, `vote`, `getPoll`, `getCandidate`, `getCandidates` |
 | `ElectionAnchor` | Record the first claim for a configuration digest | `anchor`, `verify`, `organizerOf`, `anchoredAt` |
 | `ContactBook` | Maintain a caller-specific list of wallet addresses | `addContact`, `removeContact`, `isContact`, `contactCount`, `contactAt` |
 
 Candidate lists have 2–100 entries and names are limited to 100 bytes.
 Candidate indexes start at zero. `PollManager` polls start closed; creators
 may reopen them, but an address can still vote only once per poll.
+Use `PollManager.getCandidates` to fetch a poll's complete candidate list and
+current tallies in one read call; the result is bounded by the 100-candidate
+limit.
 
 ## Voting flow
 

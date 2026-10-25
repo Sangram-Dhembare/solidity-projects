@@ -166,6 +166,20 @@ contract PollManagerTest is Test {
         manager.getCandidate(pollId, 2);
     }
 
+    function testGetCandidatesReturnsFullListAndTallies() public {
+        manager.openVoting(pollId);
+        vm.prank(address(0xA11CE));
+        manager.vote(pollId, 1);
+
+        PollManager.Candidate[] memory candidates = manager.getCandidates(pollId);
+
+        assertEq(candidates.length, 2);
+        assertEq(candidates[0].name, "Alice");
+        assertEq(candidates[0].voteCount, 0);
+        assertEq(candidates[1].name, "Bob");
+        assertEq(candidates[1].voteCount, 1);
+    }
+
     function testPollViewsRejectUnknownPoll() public {
         uint256 unknownPollId = manager.pollCount();
         bytes memory expectedError =
@@ -177,6 +191,8 @@ contract PollManagerTest is Test {
         manager.candidateCount(unknownPollId);
         vm.expectRevert(expectedError);
         manager.getCandidate(unknownPollId, 0);
+        vm.expectRevert(expectedError);
+        manager.getCandidates(unknownPollId);
         vm.expectRevert(expectedError);
         manager.hasVoted(unknownPollId, address(this));
         vm.expectRevert(expectedError);

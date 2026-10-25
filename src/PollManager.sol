@@ -151,6 +151,14 @@ contract PollManager {
         return (candidate.name, candidate.voteCount);
     }
 
+    /// @notice Returns all candidates and their current vote counts for a poll.
+    /// @param pollId The poll to inspect.
+    function getCandidates(
+        uint256 pollId
+    ) external view returns (Candidate[] memory) {
+        return _getPoll(pollId).candidates;
+    }
+
     /// @notice Returns whether an address has voted in a poll.
     /// @param pollId The poll to inspect.
     /// @param voter The address to check.
