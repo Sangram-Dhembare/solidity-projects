@@ -177,7 +177,7 @@ contract PollManager {
     }
 
     function _validateCandidateName(
-        string memory name,
+        string calldata name,
         uint256 candidateIndex
     ) private pure {
         uint256 nameLength = bytes(name).length;
